@@ -11,7 +11,7 @@ import torch.nn.functional as F
 class VariationalAutoEncoder(nn.Module):
 
     def __init__(self, input_dim, embedding_dim, inter_dim=100):
-        
+
         self.input_dim = input_dim
         self.embedding_dim = embedding_dim
 
@@ -51,7 +51,7 @@ class VariationalAutoEncoder(nn.Module):
 
     def loss(self, x, generated_sample, mean, log_var):
         reconstruction_loss = F.binary_cross_entropy(
-            generated_sample, x, reduction='sum')
+            generated_sample, x, reduction='mean')
         kl_divergence = -0.5 * \
             torch.sum(1 + log_var - mean.pow(2) - log_var.exp())
         return reconstruction_loss + kl_divergence
