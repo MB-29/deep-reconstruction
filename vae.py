@@ -11,6 +11,10 @@ import torch.nn.functional as F
 class VariationalAutoEncoder(nn.Module):
 
     def __init__(self, input_dim, embedding_dim, inter_dim=100):
+        
+        self.input_dim = input_dim
+        self.embedding_dim = embedding_dim
+
         super(VariationalAutoEncoder, self).__init__()
         self.fc_in_1 = nn.Linear(in_features=input_dim, out_features=inter_dim)
         self.fc_in_2 = nn.Linear(
