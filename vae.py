@@ -51,7 +51,7 @@ class VariationalAutoEncoder(nn.Module):
 
     def loss(self, x, generated_sample, mean, log_var):
         reconstruction_loss = F.binary_cross_entropy(
-            generated_sample, x, reduction='mean')
+            generated_sample, x, reduction='sum')
         kl_divergence = -0.5 * \
             torch.sum(1 + log_var - mean.pow(2) - log_var.exp())
         return reconstruction_loss + kl_divergence

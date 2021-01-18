@@ -7,6 +7,7 @@ import torch.nn as nn
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc, rcParams
 
 from vae import VariationalAutoEncoder
 from sampler import Sampler
@@ -15,10 +16,10 @@ data_path = '/Users/matthieu/Projets/Data/'
 image_size = 28
 n_channels = 1
 
-batch_size = 1
+batch_size = 8
 n_epochs = 20
 input_dim = image_size * image_size * n_channels
-embedding_dim = 64
+embedding_dim = 10
 learning_rate = 1e-3
 
 train_loader = torch.utils.data.DataLoader(
@@ -49,8 +50,8 @@ def train(model, optimizer, n_epochs):
         epoch_loss = 0
 
         for batch_index, (image_input, label) in enumerate(train_loader):
-            if batch_index > 5000:
-                break
+            # if batch_index > 5000:
+            #     break
             if batch_index % 100 == 0:
                 print(f'Batch index {batch_index}')
 
@@ -73,23 +74,10 @@ def generate_image(model):
     embedding_sample = model.sample(torch.zeros(embedding_dim),
                           torch.ones(embedding_dim))
     generated_sample = model.decode(embedding_sample)
-    return generated_sample.data.numpy().reshape((image_size, image_size, n_channels))
+    return vector_to_image(generated_sample.data.numpy())
 
 def vector_to_image(vector):
     return vector.reshape((image_size, image_size, n_channels))
-
-def plot_generated_samples(model, n_samples=5):
-    for sample_index in range(1, n_samples+1):
-        ax = plt.subplot(1, n_samples, sample_index)
-        ax.imshow(generate_image(model), cmap='gray')
-        plt.axis('off')
-
-
-def plot_images(samples):
-    for sample_index, sample in enumerate(samples):
-        ax = plt.subplot(1, len(samples), sample_index+1)
-        ax.imshow(sample, cmap='gray')
-        plt.axis('off')
 
 
 batch = next(iter(train_loader))
@@ -103,25 +91,34 @@ training_loss_values = train(model, optimizer, n_epochs)
 
 # RECONSTRUCTION
 
-def reconstruct(model, x0, missing_data_indices, T, method='pseudo_Gibbs'):
+def reconstruct(model, x0, original_vector, missing_data_indices, T, method='pseudo_Gibbs'):
     sampler = Sampler(model, x0.clone(), missing_data_indices, T)
     sampling_method = sampler.sample_pseudo_gibbs if method=='pseudo_Gibbs' else sampler.sample_metropolis
     sampled_vectors = sampling_method()
     sampled_images = np.array([vector_to_image(vector)
                                for vector in sampled_vectors])
-    error = (x0 - torch.Tensor(sampled_vectors)).norm(dim=1)
+    error = (original_vector - torch.Tensor(sampled_vectors)).norm(dim=1)
     return sampled_images, error
 
 
-T = 100
+T = 20
 t_sample_values = np.linspace(0, T-1, num=10, dtype=int)
 missing_data_indices = np.arange(200, 500)
 
+# input
 x = batch[0][0].view(input_dim)
-x0 = x.data.clone()
+original_vector = x.data.clone()
 
 # add noise
 x.data[missing_data_indices] = torch.abs(torch.randn(size=(len(missing_data_indices),)))
 
 # output
-sampled_images, error = reconstruct(model, x0, missing_data_indices, T)
+gibbs_sampled_images, gibbs_error = reconstruct(model, x, original_vector, missing_data_indices, T)
+metropolis_sampled_images, metropolis_error = reconstruct(model, x, original_vector, missing_data_indices, T, method='Metropolis')
+
+def plot_errors():
+    plt.plot(metropolis_error, label='Metropolis within Gibbs', lw=1, color='black')
+    plt.plot(gibbs_error, label='Pseudo Gibbs', lw=1)
+    plt.xlabel('iterations')
+    plt.ylabel('reconstruction error')
+    plt.legend()

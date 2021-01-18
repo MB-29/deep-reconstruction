@@ -54,8 +54,8 @@ class Sampler:
             psi_z = multi_normal.log_prob(z)
             psi_proposal = multi_normal.log_prob(proposal)
 
-            log_rho = proposal_log_likelihood + phi_proposal + psi_proposal - \
-                (z_log_likelihood + phi_z + psi_z)
+            log_rho = proposal_log_likelihood + phi_proposal + psi_z - \
+                (z_log_likelihood + phi_z + psi_proposal)
 
             u = np.random.uniform()
             if u <= torch.exp(log_rho):
