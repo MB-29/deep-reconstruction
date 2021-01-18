@@ -5,3 +5,15 @@ An implementation of the missing data algorithm proposed in [Leveraging the Exac
 
 ### Example output
 ![Output](demo/demo.png)
+
+## Run 
+
+```bash
+python run.py
+```
+
+
+
+## Requirements
+* Python 3
+* torch
